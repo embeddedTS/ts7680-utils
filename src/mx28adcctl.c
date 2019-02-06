@@ -10,7 +10,8 @@
 #include <unistd.h>
 
 
-const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ ;
+const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ " - "
+  GITCOMMIT;
 
 int main(int argc, char **argv) {
 	volatile unsigned int *mxlradcregs;

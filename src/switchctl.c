@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /* Copyright (c) 2019, Technologic Systems Inc. */
 
-const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ ;
+const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ " - "
+  GITCOMMIT;
 
 #include <getopt.h>
 #include <stdint.h>
@@ -238,7 +239,9 @@ L1:
 }
 
 static void usage(char **argv) {
-	fprintf(stderr, "Usage: %s [OPTION] ...\n"
+	fprintf(stderr,
+	  "%s\n\n"
+	  "Usage: %s [OPTION] ...\n"
 	  "Technologic Systems TS-76xx/TS-46xx/TS-74xx manipulation.\n"
 	  "\n"
 	  "General options:\n"
@@ -255,7 +258,7 @@ static void usage(char **argv) {
 	  "  -1, --100mb             Force 100mbit on <port>\n"
 	  "  -l, --half              Force half-duplex on <port>\n"
 	  "  -f, --full              Force full-duplex on <port>\n",
-	  argv[0]
+	  copyright, argv[0]
 	);
 }
 	

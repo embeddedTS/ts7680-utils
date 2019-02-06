@@ -23,7 +23,8 @@
 
 static int twifd;
 
-const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ ;
+const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ " - "
+  GITCOMMIT;
 
 int get_model()
 {
@@ -83,6 +84,7 @@ void auto485_en(int uart, int baud, char *mode)
 
 void usage(char **argv) {
 	fprintf(stderr,
+		"%s\n\n"
 		"Usage: %s [OPTIONS] ...\n"
 		"Technologic Systems I2C FPGA Utility\n"
 		"\n"
@@ -110,7 +112,7 @@ void usage(char **argv) {
 		"  -j, --dac3 <PWMval>    Set DAC3 output to <PWMval>\n"
 		"  -h, --help             This message\n"
 		"\n",
-		argv[0]
+		copyright, argv[0]
 	);
 }
 

@@ -1,10 +1,13 @@
 #!/bin/bash
 
-#   This file meant to be called only from prep_image script as a post
-#   set of steps to run after the image file has been unmounted
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2019, Technologic Systems Inc.
+
+# This file meant to be called only from prep_image script as a post
+# set of steps to run after the image file has been unmounted
 #
-#   This file will take an image file passed in, and from it create a kernel 
-#   image from the first partition, this is used for mx28 devices with eMMC
+# This file will take an image file passed in, and from it create a kernel 
+# image from the first partition, this is used for mx28 devices with eMMC
 
 echo "Creating kernel image from SD card image"
 START=`fdisk -l $1 | awk '$6 == 53 {print $2}'`

@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2019, Technologic Systems Inc.
+
 interface=$(echo $1 | cut -d '.' -f1)
 increment=$(echo $1 | cut -d '.' -f2)
 

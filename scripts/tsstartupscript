@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2019, Technologic Systems Inc.
+
 #Enable CAN
 echo 126 > /sys/class/gpio/export
 echo low > /sys/class/gpio/gpio126/direction

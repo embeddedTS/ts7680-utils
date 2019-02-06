@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2019, Technologic Systems Inc.
+
 echo 73 > /sys/class/gpio/export 2>/dev/null
 power_failed=0
 while true; do

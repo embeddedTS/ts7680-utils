@@ -1,0 +1,10 @@
+#!/bin/bash
+interface=$(echo $1 | cut -d '.' -f1)
+increment=$(echo $1 | cut -d '.' -f2)
+
+let "increment=$increment-1"
+shortmac=$(/sbin/ifconfig $interface|grep HWaddr|awk '{print $5}' | cut -d ':' -f4-6 | sed -e s'/\://g')
+mac2=$(printf "%x\n" $(echo $((0x$shortmac+$increment))) | sed "s/.*\(..\)\(..\)\(..\)/00:d0:69:\1:\2:\3/")
+
+echo $mac2
+

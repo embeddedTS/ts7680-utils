@@ -1,0 +1,34 @@
+#!/bin/bash
+
+echo 73 > /sys/class/gpio/export 2>/dev/null
+power_failed=0
+while true; do
+    power=$(cat /sys/class/gpio/gpio73/value)
+    if [ $power -ne 0 ] ; then
+        if [ $power_failed -eq 0 ]; then
+            # Code can be added below in order to turn off power-hungry
+            # devices, or start other shutdown procedures required.
+            # For example:
+            # Turn off cell modem on DC:
+            #   echo 233 > /sys/class/gpio/export 2>/dev/null
+            #   echo low > /sys/class/gpio/gpio233/direction
+            #
+            # Disable relays
+            #   echo 210 > /sys/class/gpio/export 2>/dev/null
+            #   echo 211 > /sys/class/gpio/export 2>/dev/null
+            #   echo low > /sys/class/gpio/gpio210/direction
+            #   echo low > /sys/class/gpio/gpio211/direction
+            #
+            # The wall command can be removed if wanted.
+
+            wall The script /usr/local/bin/tssupercapmon has detected main power has been lost!  Shutting down safely to prevent filesystem damage
+            power_failed=1
+            shutdown -r now
+        fi
+    else
+      power_failed=0
+    fi
+
+    sleep 1
+done
+ 

@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
+/* Copyright (c) 2019, Technologic Systems Inc. */
+
 #ifndef __SWITCHCTL_H__
 #define __SWITCHCTL_H__
 int phy_init(void);

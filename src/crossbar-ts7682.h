@@ -1,3 +1,6 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
+/* Copyright (c) 2019, Technologic Systems Inc. */
+
 #ifndef _CROSSBAR_TS7682_H_
 #define _CROSSBAR_TS7682_H_
 #include "fpga.h"

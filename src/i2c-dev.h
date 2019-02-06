@@ -20,8 +20,6 @@
     MA 02110-1301 USA.
 */
 
-/* $Id: i2c-dev.h 5894 2010-12-12 13:22:29Z khali $ */
-
 #ifndef LIB_I2CDEV_H
 #define LIB_I2CDEV_H
 

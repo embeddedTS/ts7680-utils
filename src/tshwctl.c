@@ -59,14 +59,16 @@ void auto485_en(int uart, int baud, char *mode)
 		else if(mode[0] == '7') symsz = 9;
 		else if(mode[0] == '6') symsz = 8;
 		else if(mode[0] == '5') symsz = 7;
-		if(mode[1] == 'e' || mode[1] == 'o') symsz++;
+		if (mode[1] == 'e' || mode[1] == 'o') symsz++;
 		if (mode[2] == '2') symsz++;
-		printf("Setting Auto TXEN for %d baud and %d bits per symbol (%s)\n",
+		printf(
+		  "Setting Auto TXEN for %d baud, %d bits per symbol (%s)\n",
 		  baud, symsz, mode);
 	} else {
 		/* Assume 8n1 */
 		symsz = 10;
-		printf("Setting Auto TXEN for %d baud and assuming 10 bits per symbol (8n1)\n",
+		printf(
+		  "Setting Auto TXEN for %d baud, 10 bits per symbol (8n1)\n",
 		  baud);
 	}
 
@@ -84,39 +86,39 @@ void auto485_en(int uart, int baud, char *mode)
 
 void usage(char **argv) {
 	fprintf(stderr,
-		"%s\n\n"
-		"Usage: %s [OPTIONS] ...\n"
-		"Technologic Systems I2C FPGA Utility\n"
-		"\n"
-		"  -i, --info             Display board info\n"
-		"  -m, --addr <address>   Sets up the address for a peek/poke\n"
-		"  -v, --poke <value>     Writes the value to the specified address\n"
-		"  -t, --peek             Reads from the specified address\n"
-		"  -o, --mode <8n1>       Used with -a, sets mode like '8n1', '7e2', etc\n"
-		"  -x, --baud <speed>     Used with -a, sets baud rate for auto485\n"
-		"  -a, --autotxen <uart>  Enables autotxen for supported CPU UARTs\n"
-		"                           Uses baud/mode if set or reads the current\n"
-		"                           configuration of that uart\n"
-		"  -c, --dump             Prints out the crossbar configuration\n"
-		"  -g, --get              Print crossbar for use in eval\n"
-		"  -s, --set              Read environment for crossbar changes\n"
-        	"  -q, --showall          Print all possible FPGA inputs and outputs.\n"
-		"  -e, --cputemp          Print CPU internal temperature\n"
-		"  -1, --modbuspoweron    Enable VIN to MODBUS port\n"
-		"  -Z, --modbuspoweroff   Gate off VIN to MODBUS port\n"
-		"  -p, --getmac           Display ethernet MAC address\n"
-		"  -l, --setmac=MAC       Set ethernet MAC address\n"
-		"  -b, --dac0 <PWMval>    Set DAC0 output to <PWMval>\n"
-		"  -d, --dac1 <PWMval>    Set DAC1 output to <PWMval>\n"
-		"  -f, --dac2 <PWMval>    Set DAC2 output to <PWMval>\n"
-		"  -j, --dac3 <PWMval>    Set DAC3 output to <PWMval>\n"
-		"  -h, --help             This message\n"
-		"\n",
-		copyright, argv[0]
+	  "%s\n\n"
+	  "Usage: %s [OPTIONS] ...\n"
+	  "Technologic Systems I2C FPGA Utility\n"
+	  "\n"
+	  "  -i, --info             Display board info\n"
+	  "  -m, --addr <address>   Sets up the address for a peek/poke\n"
+	  "  -v, --poke <value>     Writes the value to the specified address\n"
+	  "  -t, --peek             Reads from the specified address\n"
+	  "  -o, --mode <8n1>       Used with -a, sets mode like '8n1', '7e2'\n"
+	  "  -x, --baud <speed>     Used with -a, sets baud rate for auto485\n"
+	  "  -a, --autotxen <uart>  Enables autotxen for supported CPU UARTs\n"
+	  "                           Uses baud/mode if set or reads the\n"
+	  "                           current configuration of that uart\n"
+	  "  -c, --dump             Prints out the crossbar configuration\n"
+	  "  -g, --get              Print crossbar for use in eval\n"
+	  "  -s, --set              Read environment for crossbar changes\n"
+       	  "  -q, --showall          Print all possible FPGA crossbar I/O\n"
+	  "  -e, --cputemp          Print CPU internal temperature\n"
+	  "  -1, --modbuspoweron    Enable VIN to MODBUS port\n"
+	  "  -Z, --modbuspoweroff   Gate off VIN to MODBUS port\n"
+	  "  -p, --getmac           Display ethernet MAC address\n"
+	  "  -l, --setmac=MAC       Set ethernet MAC address\n"
+	  "  -b, --dac0 <PWMval>    Set DAC0 output to <PWMval>\n"
+	  "  -d, --dac1 <PWMval>    Set DAC1 output to <PWMval>\n"
+	  "  -f, --dac2 <PWMval>    Set DAC2 output to <PWMval>\n"
+	  "  -j, --dac3 <PWMval>    Set DAC3 output to <PWMval>\n"
+	  "  -h, --help             This message\n"
+	  "\n",
+	  copyright, argv[0]
 	);
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	int c, i;
 	uint16_t addr = 0x0;
@@ -264,7 +266,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	
+
 	if(opt_info) {
 		printf("model=0x%X\n", model);
 		gpio_export(44);
@@ -275,8 +277,10 @@ int main(int argc, char **argv)
 	if(opt_get) {
 		for (i = 0; cbar_outputs[i].name != 0; i++)
 		{
-			uint8_t mode = fpeek8(twifd, cbar_outputs[i].addr) >> (8 - cbar_size);
-			printf("%s=%s\n", cbar_outputs[i].name, cbar_inputs[mode].name);
+			uint8_t mode = fpeek8(twifd,
+			  (cbar_outputs[i].addr) >> (8 - cbar_size));
+			printf("%s=%s\n", cbar_outputs[i].name,
+			  cbar_inputs[mode].name);
 		}
 	}
 
@@ -287,18 +291,22 @@ int main(int argc, char **argv)
 			int j;
 			if(value != NULL) {
 				for (j = 0; cbar_inputs[j].name != 0; j++) {
-					if(strcmp(cbar_inputs[j].name, value) == 0) {
+					if(strcmp(cbar_inputs[j].name, value)
+					  == 0) {
 						int mode = cbar_inputs[j].addr;
-						uint8_t val = fpeek8(twifd, cbar_outputs[i].addr);
-						fpoke8(twifd, cbar_outputs[i].addr, 
-							   (mode << (8 - cbar_size)) | (val & cbar_mask));
-
+						uint8_t val = fpeek8(twifd,
+						  cbar_outputs[i].addr);
+						fpoke8(twifd,
+						  cbar_outputs[i].addr,
+						  (mode << (8 - cbar_size)) |
+						  (val & cbar_mask));
 						break;
 					}
 				}
 				if(cbar_inputs[i].name == 0) {
-					fprintf(stderr, "Invalid value \"%s\" for input %s\n",
-						value, cbar_outputs[i].name);
+					fprintf(stderr,
+					  "Invalid value \"%s\" for input %s\n",
+					  value, cbar_outputs[i].name);
 				}
 			}
 		}
@@ -319,11 +327,8 @@ int main(int argc, char **argv)
 			} else {
 				val = value & 0x4 ? 1 : 0;
 			}
-			printf("%13s (%3s) (%3d) %s\n", 
-				cbar_outputs[i].name,
-				dir,
-				val,
-				cbar_inputs[mode].name);
+			printf("%13s (%3s) (%3d) %s\n",	cbar_outputs[i].name,
+			  dir, val, cbar_inputs[mode].name);
 		}
 	}
 
@@ -331,7 +336,7 @@ int main(int argc, char **argv)
 		gpio_export(45);
 		gpio_export(46);
 		gpio_export(47);
-		
+
 		gpio_write(45, 0);
 		gpio_write(47, 1);
 
@@ -351,7 +356,7 @@ int main(int argc, char **argv)
 			printf("modbuspoweron=1\n");
 		}
 
-	}	
+	}
 
 	if(opt_modbuspoweroff) {
 		gpio_export(45);
@@ -468,7 +473,7 @@ int main(int argc, char **argv)
 		a = mac >> 16;
 		b = mac >> 8;
 		c = mac;
-		
+
 		printf("mac=00:d0:69:%02x:%02x:%02x\n", a, b, c);
 		printf("shortmac=%02x%02x%02x\n", a, b, c);
 

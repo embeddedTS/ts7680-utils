@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
 	for(x = 0; x < 10; x++) {
 		mxlradcregs[0x18/4] = 0x7f; //Clear interrupt ready
-		mxlradcregs[0x4/4] = 0x7f; //Schedule conversaion of chan 6:0
+		mxlradcregs[0x4/4] = 0x7f;  //Schedule conversaion of chan 6:0
 		while(!((mxlradcregs[0x10/4] & 0x7f) == 0x7f)); //Wait
 		for(i = 0; i < 7; i++)
 		  chan[i] += (mxlradcregs[(0x50+(i * 0x10))/4] & 0xffff);
@@ -48,14 +48,15 @@ int main(int argc, char **argv) {
 	mxclkctrlregs = mmap(0, getpagesize(), PROT_READ|PROT_WRITE, MAP_SHARED,
 	  devmem, 0x80040000);
 
-	// HDADC
-	//Lets see if we need to bring the HSADC out of reset
+	// HSADC
+	// Check to see if HSADC needs to be brought out of reset first
 	if(mxhsadcregs[0x0/4] & 0xC0000000) {
 		mxclkctrlregs[0x154/4] = 0x70000000;
 		mxclkctrlregs[0x1c8/4] = 0x8000;
 		//ENGR116296 errata workaround
 		mxhsadcregs[0x8/4] = 0x80000000;
-		mxhsadcregs[0x0/4] = ((mxhsadcregs[0x0/4] | 0x80000000) & (~0x40000000));
+		mxhsadcregs[0x0/4] =
+		  ((mxhsadcregs[0x0/4] | 0x80000000) & (~0x40000000));
 		mxhsadcregs[0x4/4] = 0x40000000;
 		mxhsadcregs[0x8/4] = 0x40000000;
 		mxhsadcregs[0x4/4] = 0x40000000;
@@ -65,10 +66,10 @@ int main(int argc, char **argv) {
 	}
 
 	mxhsadcregs[0x28/4] = 0x2000; //Clear powerdown
-	mxhsadcregs[0x24/4] = 0x31; //Set precharge and SH bypass
-	mxhsadcregs[0x30/4] = 0xa; //Set sample num
-	mxhsadcregs[0x40/4] = 0x1; //Set seq num
-	mxhsadcregs[0x4/4] = 0x40000; //12bit mode
+	mxhsadcregs[0x24/4] = 0x31;   //Set precharge and SH bypass
+	mxhsadcregs[0x30/4] = 0xa;    //Set sample num
+	mxhsadcregs[0x40/4] = 0x1;    //Set seq num
+	mxhsadcregs[0x04/4] = 0x40000; //12bit mode
 
 	while(!(mxhsadcregs[0x10/4] & 0x20)) {
 		mxhsadcregs[0x50/4]; //Empty FIFO
@@ -77,9 +78,9 @@ int main(int argc, char **argv) {
 	mxhsadcregs[0x50/4]; //An extra read is necessary
 
 	mxhsadcregs[0x14/4] = 0xfc000000; //Clr interrupts
-	mxhsadcregs[0x4/4] = 0x1; //Set HS_RUN
+	mxhsadcregs[0x4/4] = 0x1;         //Set HS_RUN
 	usleep(10);
-	mxhsadcregs[0x4/4] = 0x08000000; //Start conversion
+	mxhsadcregs[0x4/4] = 0x08000000;      //Start conversion
 	while(!(mxhsadcregs[0x10/4] & 0x1)) ; //Wait for interrupt
 
 	for(i = 0; i < 5; i++) {
@@ -88,23 +89,23 @@ int main(int argc, char **argv) {
 	}
 
 	/* This is where value to voltage conversions would take
-	 * place.  Values below are generic and can be used as a 
+	 * place.  Values below are generic and can be used as a
 	 * guideline.  They were derived to be within 1% error,
 	 * however differences in environments, tolerance in components,
-	 * and other factors may bring that error up.  Further calibration 
+	 * and other factors may bring that error up.  Further calibration
 	 * can be done to reduce this error on a per-unit basis.
 	 *
 	 * The math is done to multiply everything up and divide
-	 * it down to the resistor network ratio.  It is done 
+	 * it down to the resistor network ratio.  It is done
 	 * completely using ints and avoids any floating point math
 	 * which has a slower calculation speed and can add in further
 	 * error. The intended output units are listed with each equation.
 	 *
 	 * Additionally, since very large numbers are used in the
 	 * example math below, it may not be possible to implement the math
-	 * as-is in some real world applications. 
+	 * as-is in some real world applications.
 	 *
-	 * All chan[x] values include 10 samples, this needs to be 
+	 * All chan[x] values include 10 samples, this needs to be
 	 * divided out to get an average.
 	 *
 	 * TS-7682
@@ -125,9 +126,9 @@ int main(int argc, char **argv) {
 	 *     PCB [Rev B]:
 	 *       Note: R134-R137 are intended to add bipolar input to the
 	 *       existing channels.  The FETs must also be removed in order to
-	 *       correctly handle a negative input voltage.  The default 
+	 *       correctly handle a negative input voltage.  The default
 	 *       Rev B PCB configuration has these resistors installed.  Either
-	 *       they must be removed, or the FET on each channel.  And the 
+	 *       they must be removed, or the FET on each channel.  And the
 	 *       math can either use the above numbers, or a tuned equation
 	 *       to handle their bipolar behavior.
 	 *

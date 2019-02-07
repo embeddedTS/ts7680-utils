@@ -102,7 +102,8 @@ int gpio_select(int gpio)
 	fd_set fds;
 	FD_ZERO(&fds);
 
-	snprintf(gpio_irq, sizeof(gpio_irq), "/sys/class/gpio/gpio%d/value", gpio);
+	snprintf(gpio_irq, sizeof(gpio_irq), "/sys/class/gpio/gpio%d/value",
+	  gpio);
 	irqfd = open(gpio_irq, O_RDONLY, S_IREAD);
 	if(irqfd < 1) {
 #ifdef CTL
@@ -135,7 +136,7 @@ int gpio_export(int gpio)
 	efd = open("/sys/class/gpio/export", O_WRONLY);
 
 	if(efd != -1) {
-		sprintf(buf, "%d", gpio); 
+		sprintf(buf, "%d", gpio);
 		ret = write(efd, buf, strlen(buf));
 		if(ret < 0) {
 #ifdef CTL
@@ -185,13 +186,13 @@ int gpio_read(int gpio)
 #endif
 		return -1;
 	}
-	
+
 	close(gpiofd);
 	return atoi(in);
 }
 
 int gpio_write(int gpio, int val)
-{	
+{
 	char buf[50];
 	int ret, gpiofd;
 	sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
@@ -248,7 +249,8 @@ int main(int argc, char **argv)
 		return(1);
 	}
 
-	while((c = getopt_long(argc, argv, "p:e:l:d:r:", long_options, NULL)) != -1) {
+	while((c = getopt_long(argc, argv, "p:e:l:d:r:", long_options, NULL))
+	  != -1) {
 		int gpio, i;
 
 		switch(c) {

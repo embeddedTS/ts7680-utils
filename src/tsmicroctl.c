@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <dirent.h> 
+#include <dirent.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -97,7 +97,7 @@ void do_info(int twifd)
 		break;
 	}
 
- 
+
 }
 
 static void usage(char **argv) {
@@ -108,7 +108,6 @@ static void usage(char **argv) {
 	  "\n"
 	  "  -i, --info              Get info about the microcontroller\n"
 	  "  -L, --sleep             Sleep CPU, must specify -M|-m to wake\n"
-	  /*"  -F, --standby           Standby CPU, must specify -M|-m to wake\n"*/
 	  "  -M, --timewkup=<time>   Time in seconds to wake up after\n"
 	  "  -m, --resetswitchwkup   Wake up at reset switch is press\n"
 	  "  -X, --resetswitchon     Enable reset switch\n"
@@ -128,7 +127,6 @@ int main(int argc, char **argv)
 	static struct option long_options[] = {
 	  { "info", 0, 0, 'i' },
 	  { "sleep", 0, 0, 'L'},
-	  /*{ "standby", 0, 0, 'F'},*/
 	  { "timewkup", 1, 0, 'M'},
 	  { "resetswitchwkup", 0, 0, 'm'},
 	  { "resetswitchon", 0, 0, 'X'},
@@ -146,8 +144,6 @@ int main(int argc, char **argv)
 	switch(model) {
 	  case 0x7680:
 	  case 0x7682:
-	  case 0x7400:
-	  case 0x7553:
 		break;
 	  default:
 		fprintf(stderr, "Unsupported model TS-%x\n", model);
@@ -158,10 +154,10 @@ int main(int argc, char **argv)
 	if(twifd == -1)
 	  return 1;
 
-	
 
-	while((c = getopt_long(argc, argv, 
-	  "iLFM:XYhm",
+
+	while((c = getopt_long(argc, argv,
+	  "iLM:XYhm",
 	  long_options, NULL)) != -1) {
 		switch (c) {
 		  case 'i':
@@ -170,10 +166,6 @@ int main(int argc, char **argv)
 		  case 'L':
 			opt_sleepmode = 1;
 			break;
-		  /* Standby is currently not supported by kernel*/
-		  /*case 'F':
-			opt_sleepmode = 2;
-			break;*/
 		  case 'M':
 			opt_timewkup = strtoul(optarg, NULL, 0);
 			break;
@@ -194,8 +186,8 @@ int main(int argc, char **argv)
 	}
 
 	if(opt_resetswitch) {
-		unsigned char dat = 0x40;	
-		
+		unsigned char dat = 0x40;
+
 		dat |= (opt_resetswitch & 0x2); //0x40 for off, 0x42 on
 		write(twifd, &dat, 1);
 	}
@@ -211,7 +203,7 @@ int main(int argc, char **argv)
 		write(twifd, &dat, 4);
 	}
 
-	
+
 	return 0;
 }
 

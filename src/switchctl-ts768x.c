@@ -12,7 +12,7 @@
 
 volatile unsigned int *mxgpioregs;
 
-int phy_init(void) 
+int phy_init(void)
 {
 	int devmem;
 
@@ -38,7 +38,8 @@ static void inline MDIO_LO(void) {mxgpioregs[0x748/4] = 0x2;}
 static void inline MDC_HI(void) {mxgpioregs[0x744/4] = 0x1;}
 static void inline MDC_LO(void) {mxgpioregs[0x748/4] = 0x1;}
 
-int phy_write(unsigned long phy, unsigned long reg, unsigned short data) {
+int phy_write(unsigned long phy, unsigned long reg, unsigned short data)
+{
 	int x;
 	unsigned int b;
 
@@ -69,10 +70,11 @@ int phy_write(unsigned long phy, unsigned long reg, unsigned short data) {
 	/* send the PHY address, starting with MSB */
 	b = 0x10;
 	for(x=0; x < 5; x++) {
-		if (phy & b)
-		  {MDIO_HI();}
-		else
-		  {MDIO_LO();}
+		if (phy & b) {
+			MDIO_HI();
+		} else {
+			MDIO_LO();
+		}
 
 		MDC_HI();
 		MDC_LO();
@@ -84,10 +86,11 @@ int phy_write(unsigned long phy, unsigned long reg, unsigned short data) {
 	/* send the register address, starting with MSB */
 	b = 0x10;
 	for(x=0; x < 5; x++) {
-		if (reg & b)
-		  {MDIO_HI();}
-		else
-		  {MDIO_LO();}
+		if (reg & b) {
+			MDIO_HI();
+		} else {
+			MDIO_LO();
+		}
 
 		MDC_HI();
 		MDC_LO();
@@ -109,10 +112,11 @@ int phy_write(unsigned long phy, unsigned long reg, unsigned short data) {
 	/* send the data, starting with MSB */
 	b = 0x8000;
 	for(x=0; x < 16; x++) {
-		if (data & b)
-		 { MDIO_HI();}
-		else
-		  {MDIO_LO();}
+		if (data & b) {
+			MDIO_HI();
+		} else {
+			MDIO_LO();
+		}
 
 		MDC_HI();
 		MDC_LO();
@@ -127,7 +131,8 @@ int phy_write(unsigned long phy, unsigned long reg, unsigned short data) {
 }
 
 int phy_read(unsigned long phy, unsigned long reg,
-  volatile unsigned short *data) {
+  volatile unsigned short *data)
+{
 	int x, d;
 	unsigned int a,b;
 
@@ -155,25 +160,27 @@ int phy_read(unsigned long phy, unsigned long reg,
 	/* send the PHY address, starting with MSB */
 	b = 0x10;
 	for(x=0; x < 5; x++) {
-		if (phy & b)
-		  {MDIO_HI();}
-		else
-		  {MDIO_LO();}
+		if (phy & b) {
+			MDIO_HI();
+		} else {
+			MDIO_LO();
+		}
 
 		MDC_HI();
 		MDC_LO();
 
 		b >>= 1;
-		}
+	}
 		/* ends with MDC low, MDIO indeterminate */
 
 	/* send the register address, starting with MSB */
 	b = 0x10;
 	for(x=0; x < 5; x++) {
-		if (reg & b)
-		  {MDIO_HI();}
-		else
-		  {MDIO_LO();}
+		if (reg & b) {
+			MDIO_HI();
+		} else {
+			MDIO_LO();
+		}
 
 		MDC_HI();
 		MDC_LO();
@@ -194,8 +201,7 @@ int phy_read(unsigned long phy, unsigned long reg,
 		MDC_HI();
 		a = MDIO_RD();
 
-		if (a & 1)
-		d |= b;
+		if (a & 1) d |= b;
 
 		MDC_LO();
 

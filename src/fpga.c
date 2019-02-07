@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <dirent.h> 
+#include <dirent.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,7 +22,6 @@ int fpga_init(char *path, char adr)
 		// Will always be I2C0 on the 7680
 		fd = open("/dev/i2c-0", O_RDWR);
 	} else {
-		
 		fd = open(path, O_RDWR);
 	}
 

@@ -1,0 +1,9 @@
+[Match]
+Name=eth0
+KernelCommandLine=!tsvlan
+
+[Network]
+DHCP=yes
+
+[DHCP]
+UseDomains=yes

@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # Copyright (c) 2019, Technologic Systems Inc.
 
+# Note! This script is only needed in the 3.14 Debian Jessie images
+# It is not advised to run this script on the 4.9 Debian Stretch image
+
 #Enable CAN
 echo 126 > /sys/class/gpio/export
 echo low > /sys/class/gpio/gpio126/direction

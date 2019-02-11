@@ -334,6 +334,10 @@ int main(int argc, char **argv) {
 	  { 0, 0, 0, 0}
 	};
 
+	if(argc == 1) {
+		usage(argv);
+		return(1);
+	}
 
 	while((c = getopt_long(argc, argv,
           "Py5CQ:hp:a01lf", long_options, NULL)) != -1) {

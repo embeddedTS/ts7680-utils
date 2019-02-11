@@ -172,6 +172,11 @@ int main(int argc, char **argv)
 		{ 0, 0, 0, 0 }
 	};
 
+	if(argc == 1) {
+		usage(argv);
+		return(1);
+	}
+
 	model = get_model();
 	if(model == 0x7680) {
 		cbar_inputs = ts7680_inputs;

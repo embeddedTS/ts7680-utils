@@ -28,14 +28,13 @@ int get_model()
 	FILE *proc;
 	char mdl[256];
 	char *ptr;
-	int sz;
 
 	proc = fopen("/proc/device-tree/model", "r");
 	if (!proc) {
 	    perror("model");
 	    return 0;
 	}
-	sz = fread(mdl, 256, 1, proc);
+	fread(mdl, 256, 1, proc);
 	ptr = strstr(mdl, "TS-");
 	return strtoull(ptr+3, NULL, 16);
 }

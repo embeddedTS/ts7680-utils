@@ -98,7 +98,7 @@ int gpio_setedge(int gpio, int rising, int falling)
 int gpio_select(int gpio)
 {
 	char gpio_irq[64];
-	int ret = 0, buf, irqfd;
+	int buf, irqfd;
 	fd_set fds;
 	FD_ZERO(&fds);
 
@@ -117,7 +117,7 @@ int gpio_select(int gpio)
 
 	while(1) {
 		FD_SET(irqfd, &fds);
-		ret = select(irqfd + 1, NULL, NULL, &fds, NULL);
+		select(irqfd + 1, NULL, NULL, &fds, NULL);
 		if(FD_ISSET(irqfd, &fds))
 		{
 			FD_CLR(irqfd, &fds);  //Remove the filedes from set

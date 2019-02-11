@@ -59,6 +59,14 @@ void auto485_en(int uart, int baud, char *mode)
 		else if(mode[0] == '7') symsz = 9;
 		else if(mode[0] == '6') symsz = 8;
 		else if(mode[0] == '5') symsz = 7;
+		else {
+			fprintf(stderr, "Invalid UART mode setting, %s.\n",
+			  mode);
+			fprintf(stderr, "Forcing 8n1\n");
+			symsz = 10;
+			mode[1] = 'n';
+			mode[2] = '1';
+		}
 		if (mode[1] == 'e' || mode[1] == 'o') symsz++;
 		if (mode[2] == '2') symsz++;
 		printf(
@@ -364,11 +372,11 @@ int main(int argc, char **argv)
 		gpio_direction(45, 1);
 	}
 
-	if(opt_poke) {
+	if(opt_poke && opt_addr) {
 		fpoke8(twifd, addr, pokeval);
 	}
 
-	if(opt_peek) {
+	if(opt_peek && opt_addr) {
 		printf("0x%X\n", fpeek8(twifd, addr));
 	}
 

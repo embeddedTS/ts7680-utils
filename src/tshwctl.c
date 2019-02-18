@@ -290,8 +290,8 @@ int main(int argc, char **argv)
 	if(opt_get) {
 		for (i = 0; cbar_outputs[i].name != 0; i++)
 		{
-			uint8_t mode = fpeek8(twifd,
-			  (cbar_outputs[i].addr) >> (8 - cbar_size));
+			uint8_t mode = (fpeek8(twifd, cbar_outputs[i].addr)
+			  >> (8 - cbar_size));
 			printf("%s=%s\n", cbar_outputs[i].name,
 			  cbar_inputs[mode].name);
 		}
@@ -311,8 +311,8 @@ int main(int argc, char **argv)
 						  cbar_outputs[i].addr);
 						fpoke8(twifd,
 						  cbar_outputs[i].addr,
-						  (mode << (8 - cbar_size)) |
-						  (val & cbar_mask));
+						  ((mode << (8 - cbar_size)) |
+						  (val & cbar_mask)));
 						break;
 					}
 				}

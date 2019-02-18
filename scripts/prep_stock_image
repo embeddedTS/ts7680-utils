@@ -37,7 +37,6 @@ POST_SCRIPTS=""
 #   Remove /etc/udev/rules.d/70-persistent-net.rules
 #   Remove /boot/*.sb
 #   Remove /boot/*.imx
-#   Remove /boot/*.ub
 #   Remove /boot/*.vme*
 #   Clean up /root
 #     Only keep
@@ -169,7 +168,6 @@ rm mount_point/etc/udev/rules.d/70-persistent-net.rules
 echo "#" > mount_point/etc/udev/rules.d/75-persistent-net-generator.rules
 rm -rfv mount_point/boot/*.sb
 rm -rfv mount_point/boot/*.imx
-rm -rfv mount_point/boot/*.ub
 rm -rfv mount_point/boot/*.vme*
 find mount_point/root/ | grep -v -e .bashrc -e .profile -e .gtkrc-2.0 -e "root/$" | xargs rm -rfv
 

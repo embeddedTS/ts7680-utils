@@ -59,6 +59,7 @@ int silabs_init()
 void do_info(int twifd)
 {
 	uint8_t data[28];
+	unsigned int pct;
 	bzero(data, 28);
 	read(twifd, data, 28);
 
@@ -75,6 +76,20 @@ void do_info(int twifd)
 	printf("P2_5=0x%x\n", data[20]<<8|data[21]);
 	printf("P2_6=0x%x\n", data[22]<<8|data[23]);
 	printf("P2_7=0x%x\n", data[24]<<8|data[25]);
+
+	/* The math below is the same that is used by U-Boot. The value of 2500
+	 * is the lowest viable charge level. Once above that, dividing down by
+	 * 23 gets roughly the full percentage scale. This max's out at ~102,
+	 * anything above that is considered to just be 100%
+	 */
+	pct = ((data[2]<<8 | data[3])*1000/409*2);
+	if (pct >= 2500) {
+		pct = ((pct - 2500)/23);
+		if (pct > 100) pct = 100;
+	} else {
+		pct = 0;
+	}
+	printf("supercap_pct=%d\n", pct);
 
 	printf("temp_sensor=0x%x\n", data[26]<<8|data[27]);
 	printf("reboot_source=");

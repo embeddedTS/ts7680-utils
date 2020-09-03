@@ -54,7 +54,7 @@ static const char *MemberTagStr(int tag)
 	}
 }
 
-inline void switch_errata_3_1(unsigned int n)
+static inline void switch_errata_3_1(unsigned int n)
 {
 	volatile unsigned short smicmd, x;
 
@@ -91,7 +91,7 @@ inline void switch_errata_3_1(unsigned int n)
 	phy_write(0x17, 0x18, smicmd);
 }
 
-inline void switch_enphy(unsigned long phy)
+static inline void switch_enphy(unsigned long phy)
 {
 	volatile unsigned short x;
 	do {
@@ -101,19 +101,19 @@ inline void switch_enphy(unsigned long phy)
 	phy_write(0x17, 0x18, phy);
 }
 
-inline void switch_enflood(unsigned long port)
+static inline void switch_enflood(unsigned long port)
 {
 	volatile unsigned short data;
 	phy_read(port, 0x04, &data);
 	phy_write(port, 0x04, data | 0xf);
 }
 
-inline void switch_enbcastflood(unsigned long port)
+static inline void switch_enbcastflood(unsigned long port)
 {
 	phy_write(port, 0x04, 0x7f);
 }
 
-inline void switch_forcelink(unsigned long port)
+static inline void switch_forcelink(unsigned long port)
 {
 	volatile unsigned short data;
 	phy_read(port, 0x01, &data);

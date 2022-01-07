@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
-/* Copyright (c) 2019, Technologic Systems Inc. */
+/* Copyright (c) 2019-2022 Technologic Systems, Inc. dba embeddedTS */
 
 #include <assert.h>
 #include <stdio.h>
@@ -23,7 +23,7 @@
 
 static int twifd;
 
-const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ " - "
+const char copyright[] = "Copyright (c) embeddedTS - " __DATE__ " - "
   GITCOMMIT;
 
 int get_model()
@@ -96,7 +96,7 @@ void usage(char **argv) {
 	fprintf(stderr,
 	  "%s\n\n"
 	  "Usage: %s [OPTIONS] ...\n"
-	  "Technologic Systems I2C FPGA Utility\n"
+	  "embeddedTS I2C FPGA Utility\n"
 	  "\n"
 	  "  -i, --info             Display board info\n"
 	  "  -m, --addr <address>   Sets up the address for a peek/poke\n"

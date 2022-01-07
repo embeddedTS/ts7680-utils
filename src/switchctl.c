@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
-/* Copyright (c) 2019, Technologic Systems Inc. */
+/* Copyright (c) 2019-2022 Technologic Systems, Inc. dba embeddedTS */
 
-const char copyright[] = "Copyright (c) Technologic Systems - " __DATE__ " - "
+const char copyright[] = "Copyright (c) embeddedTS - " __DATE__ " - "
   GITCOMMIT;
 
 #include <getopt.h>
@@ -287,7 +287,7 @@ static void usage(char **argv) {
 	fprintf(stderr,
 	  "%s\n\n"
 	  "Usage: %s [OPTION] ...\n"
-	  "Technologic Systems TS-76xx/TS-46xx/TS-74xx manipulation.\n"
+	  "embeddedTS TS-76xx/TS-46xx/TS-74xx manipulation.\n"
 	  "\n"
 	  "General options:\n"
 	  "  -P, --ethvlan           Set each switch port to its own VLAN\n"

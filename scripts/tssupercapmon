@@ -23,7 +23,7 @@ while true; do
         # Not all tsmicroctl builds support reporting the supercap charge level.
         # In the case of this string not being set, then just assume the current
         # level is 0 and spit information out to the logs.
-        eval "$(/usr/local/bin/tsmicroctl -i)"
+        eval "$(tsmicroctl -i)"
         if [ ! -z "${supercap_pct}" ]; then
             echo "Supercapacitors at ${supercap_pct}"
         else
@@ -51,7 +51,7 @@ while true; do
 
                 wall The script /usr/local/bin/tssupercapmon has detected main power has been lost!  Shutting down safely to prevent filesystem damage
 
-                shutdown -r now
+		reboot
                 exit
             fi
         fi

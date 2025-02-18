@@ -12,8 +12,5 @@ tshwctl_CPPFLAGS = -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
 tsmicroctl_SOURCES = tsmicroctl.c
 tsmicroctl_CPPFLAGS = -DCTL -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
 
-getmac_SOURCES = getmac.c
-getmac_CPPFLAGS = -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
-
-bin_PROGRAMS = tshwctl tsmicroctl getmac
+bin_PROGRAMS = tshwctl tsmicroctl
 noinst_PROGRAMS = mx28adcctl switchctl

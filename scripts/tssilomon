@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
 # SPDX-License-Identifier: BSD-2-Clause
-# Copyright (c) 2019-2022 Technologic Systems, Inc. dba embeddedTS
+# Copyright (c) 2019-2024 Technologic Systems, Inc. dba embeddedTS
 
 # Due to observed issues in some power installations, the script below has the
 # following behavior:
@@ -14,48 +14,37 @@
 # Conservative value to wait for until shutting down
 RESET_PCT=90
 
-echo 73 > /sys/class/gpio/export 2>/dev/null
+powerfail_gpio=$(gpiofind "POWER_FAIL")
+supercap_pct=0
 
 while true; do
-    power=$(cat /sys/class/gpio/gpio73/value)
+    # shellcheck disable=SC2086
+    power=$(gpioget ${powerfail_gpio})
     if [ "${power}" -ne 0 ]; then
-
-        # Not all tsmicroctl builds support reporting the supercap charge level.
-        # In the case of this string not being set, then just assume the current
-        # level is 0 and spit information out to the logs.
         eval "$(tsmicroctl -i)"
-        if [ ! -z "${supercap_pct}" ]; then
-            echo "Supercapacitors at ${supercap_pct}"
-        else
-            echo "\'tsmicroctl\' does not support reading charge percentage!"
-            echo "Please update \'tsmicroctl\'!"
-            supercap_pct=0
-        fi
+        echo "Supercapacitors at ${supercap_pct}"
 
-        if [ "${supercap_pct}" -le $RESET_PCT ]; then
+        if [ "${supercap_pct}" -le "${RESET_PCT}" ]; then
             if [ "${power_failed}" -gt 0 ]; then
                 # Code can be added below in order to turn off power-hungry
                 # devices, or start other shutdown procedures required.
                 # For example:
                 # Turn off cell modem on DC:
-                #   echo 233 > /sys/class/gpio/export 2>/dev/null
-                #   echo low > /sys/class/gpio/gpio233/direction
+		#   gpioset $(gpiofind "EN_DC_5V")=0
                 #
                 # Disable relays
-                #   echo 210 > /sys/class/gpio/export 2>/dev/null
-                #   echo 211 > /sys/class/gpio/export 2>/dev/null
-                #   echo low > /sys/class/gpio/gpio210/direction
-                #   echo low > /sys/class/gpio/gpio211/direction
+		#   gpioset $(gpiofind "RELAY1")=0
+		#   gpioset $(gpiofind "RELAY2")=0
                 #
                 # The wall command can be removed if wanted.
 
-                wall The script /usr/local/bin/tssupercapmon has detected main power has been lost!  Shutting down safely to prevent filesystem damage
+                wall The script "${0}" has detected main power has been lost! Shutting down safely to prevent filesystem damage
 
 		reboot
                 exit
             fi
         fi
-        let power_failed=power_failed+1
+        power_failed=$((power_failed+1))
     else
         power_failed=0
     fi

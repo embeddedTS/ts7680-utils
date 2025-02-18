@@ -1,9 +1,0 @@
-[Unit]
-Description=TS SuperCap Monitor Daemon
-
-[Service]
-Type=simple
-ExecStart=/bin/bash /usr/local/bin/tssupercapmon
-
-[Install]
-WantedBy=multi-user.target

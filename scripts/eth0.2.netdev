@@ -1,6 +1,0 @@
-[NetDev]
-Name=eth0.2
-Kind=vlan
-
-[VLAN]
-Id=2

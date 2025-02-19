@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2019-2024 Technologic Systems, Inc. dba embeddedTS
+
+# Due to observed issues in some power installations, the script below has the
+# following behavior:
+#   - Once every half second, read the POWER_FAIL bit
+#   - If POWER_FAIL, monitor pct through tsmicroctl once per half second.
+#   - If pct is less than the threshold -AND- POWER_FAIL has been asserted for
+#       at least two checks in a row, then reboot the system.
+# The above AND is necessary to not reboot on spurious power fail events
+
+# Conservative value to wait for until shutting down
+RESET_PCT=90
+
+powerfail_gpio=$(gpiofind "POWER_FAIL")
+supercap_pct=0
+
+while true; do
+    # shellcheck disable=SC2086
+    power=$(gpioget ${powerfail_gpio})
+    if [ "${power}" -ne 0 ]; then
+        eval "$(tsmicroctl -i)"
+        echo "Supercapacitors at ${supercap_pct}"
+
+        if [ "${supercap_pct}" -le "${RESET_PCT}" ]; then
+            if [ "${power_failed}" -gt 0 ]; then
+                # Code can be added below in order to turn off power-hungry
+                # devices, or start other shutdown procedures required.
+                # For example:
+                # Turn off cell modem on DC:
+		#   gpioset $(gpiofind "EN_DC_5V")=0
+                #
+                # Disable relays
+		#   gpioset $(gpiofind "RELAY1")=0
+		#   gpioset $(gpiofind "RELAY2")=0
+                #
+                # The wall command can be removed if wanted.
+
+                wall The script "${0}" has detected main power has been lost! Shutting down safely to prevent filesystem damage
+
+		reboot
+                exit
+            fi
+        fi
+        power_failed=$((power_failed+1))
+    else
+        power_failed=0
+    fi
+
+    sleep .5
+done
+ 

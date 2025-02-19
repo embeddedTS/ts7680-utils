@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <gpiod.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -17,7 +18,6 @@
 #include <math.h>
 
 #include "fpga.h"
-#include "gpiolib.h"
 #include "crossbar-ts7680.h"
 #include "crossbar-ts7682.h"
 
@@ -143,6 +143,11 @@ int main(int argc, char **argv)
 	char *uartmode = 0;
 	struct cbarpin *cbar_inputs, *cbar_outputs;
 	int cbar_size, cbar_mask;
+	struct gpiod_chip *chip = NULL;
+	struct gpiod_line *line_bootmode = NULL;
+	struct gpiod_line *line_modbus_3vn = NULL;
+	struct gpiod_line *line_modbus_fault = NULL;
+	struct gpiod_line *line_modbus_24v = NULL;
 
 	static struct option long_options[] = {
 		{ "addr", 1, 0, 'm' },
@@ -193,6 +198,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	chip = gpiod_chip_open_by_number(1);
+	if (chip == NULL) {
+		fprintf(stderr, "Unable to open GPIO chip\n");
+		return 1;
+	}
+
 	while((c = getopt_long(argc, argv, "+m:v:o:x:ta:cgsqhipl:e1Zb:d:f:j:",
 	  long_options, NULL)) != -1) {
 		switch(c) {
@@ -205,9 +216,11 @@ int main(int argc, char **argv)
 			break;
 		case '1':
 			opt_modbuspoweron = 1;
+			opt_modbuspoweroff = 0;
 			break;
 		case 'Z':
 			opt_modbuspoweroff = 1;
+			opt_modbuspoweron = 0;
 			break;
 		case 'm':
 			opt_addr = 1;
@@ -274,20 +287,32 @@ int main(int argc, char **argv)
 	}
 
 	twifd = fpga_init(NULL, 0);
-	if(twifd == -1) {
+	if (twifd == -1) {
 		perror("Can't open FPGA I2C bus");
 		return 1;
 	}
 
 
-	if(opt_info) {
+	if (opt_info) {
 		printf("model=0x%X\n", model);
-		gpio_export(44);
-		printf("bootmode=0x%X\n", gpio_read(44) ? 1 : 0);
+		line_bootmode = gpiod_chip_get_line(chip, 12);
+		if (line_bootmode == NULL) {
+			fprintf(stderr, "Unable to get bootmode pin\n");
+			return 1;
+		}
+
+		if (gpiod_line_request_input(line_bootmode, "tshwctl")) {
+			fprintf(stderr, "Unable to request bootmode pin\n");
+			return 1;
+		}
+
+		printf("bootmode=0x%X\n", gpiod_line_get_value(line_bootmode));
 		printf("fpga_revision=0x%X\n", fpeek8(twifd, 0x7F));
+
+		gpiod_line_release(line_bootmode);
 	}
 
-	if(opt_get) {
+	if (opt_get) {
 		for (i = 0; cbar_outputs[i].name != 0; i++)
 		{
 			uint8_t mode = (fpeek8(twifd, cbar_outputs[i].addr)
@@ -297,7 +322,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(opt_set) {
+	if (opt_set) {
 		for (i = 0; cbar_outputs[i].name != 0; i++)
 		{
 			char *value = getenv(cbar_outputs[i].name);
@@ -325,7 +350,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(opt_dump) {
+	if (opt_dump) {
 		i = 0;
 		printf("%13s (DIR) (VAL) FPGA Input\n", "FPGA Pad");
 		for (i = 0; cbar_outputs[i].name != 0; i++)
@@ -345,47 +370,65 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(opt_modbuspoweron) {
-		gpio_export(45);
-		gpio_export(46);
-		gpio_export(47);
-
-		gpio_write(45, 0);
-		gpio_write(47, 1);
-
-		gpio_direction(45, 1);
-		gpio_direction(46, 0);
-		gpio_direction(47, 1);
-
-		gpio_write(47, 0);
-		usleep(10000);
-
-		if(gpio_read(46)) {
-			gpio_write(47, 1);
-			printf("modbuspoweron=0\n");
-		} else {
-			gpio_write(47, 1);
-			gpio_write(45, 1);
-			printf("modbuspoweron=1\n");
+	/* This requests the pins and puts them in a safe state */
+	if (opt_modbuspoweron || opt_modbuspoweroff) {
+		line_modbus_3vn = gpiod_chip_get_line(chip, 15);
+		line_modbus_fault = gpiod_chip_get_line(chip, 14);
+		line_modbus_24v = gpiod_chip_get_line(chip, 13);
+		if (line_modbus_3vn == NULL ||
+		    line_modbus_fault == NULL ||
+		    line_modbus_24v == NULL) {
+			fprintf(stderr, "Unable to get MODBUS lines\n");
+			return 1;
 		}
 
+		if (gpiod_line_request_output(line_modbus_3vn, "tshwctl", 1) ||
+		    gpiod_line_request_input(line_modbus_fault, "tshwctl") ||
+		    gpiod_line_request_output(line_modbus_24v, "tshwctl", 0)) {
+			fprintf(stderr, "Unable to request MODBUS lines\n");
+			return 1;
+		}
 	}
 
-	if(opt_modbuspoweroff) {
-		gpio_export(45);
-		gpio_write(45, 0);
-		gpio_direction(45, 1);
+	if (opt_modbuspoweron) {
+		/* Enable 3.3 V test, wait for settle, and test the fault IO.
+		 * If no fault, then enable higher 24 V power to MODBUS device.
+		 */
+		gpiod_line_set_value(line_modbus_3vn, 0);
+		usleep(10000);
+		if (gpiod_line_get_value(line_modbus_fault)) {
+			gpiod_line_set_value(line_modbus_3vn, 1);
+			printf("modbuspoweron=0\n");
+		} else {
+			gpiod_line_set_value(line_modbus_3vn, 1);
+			gpiod_line_set_value(line_modbus_24v, 1);
+			printf("modbuspoweron=1\n");
+		}
 	}
 
-	if(opt_poke && opt_addr) {
+	/* NOTE:
+	 * opt_modbuspoweron and opt_modbuspoweroff are mutually exclusive via
+	 * optarg parsing. As the acquisition of the the lines sets them to a
+	 * safe state, nothing specifically need to happen for powering off the
+	 * modbus.
+	 */
+
+	if (opt_modbuspoweron || opt_modbuspoweroff) {
+		gpiod_line_release(line_modbus_3vn);
+		gpiod_line_release(line_modbus_fault);
+		gpiod_line_release(line_modbus_24v);
+		gpiod_chip_close(chip);
+	}
+
+	if (opt_poke && opt_addr) {
 		fpoke8(twifd, addr, pokeval);
 	}
 
-	if(opt_peek && opt_addr) {
+	if (opt_peek && opt_addr) {
 		printf("0x%X\n", fpeek8(twifd, addr));
 	}
 
-	if(opt_auto485 > -1) {
+	if (opt_auto485 > -1) {
 		auto485_en(opt_auto485, baud, uartmode);
 	}
 
@@ -406,14 +449,14 @@ int main(int argc, char **argv)
 		mxlradcregs[0x60/4] = 0x0; //Clear ch1 reg
 		temp[0] = temp[1] = 0;
 
-		for(x = 0; x < 10; x++) {
+		for (x = 0; x < 10; x++) {
 			/* Clear interrupts
 			 * Schedule readings
 			 * Poll for sample completion
 			 * Pull out samples*/
 			mxlradcregs[0x18/4] = 0x3;
 			mxlradcregs[0x4/4] = 0x3;
-			while(!((mxlradcregs[0x10/4] & 0x3) == 0x3)) ;
+			while (!((mxlradcregs[0x10/4] & 0x3) == 0x3)) ;
 			temp[0] += mxlradcregs[0x60/4] & 0xFFFF;
 			temp[1] += mxlradcregs[0x50/4] & 0xFFFF;
 		}
@@ -471,13 +514,13 @@ int main(int argc, char **argv)
 
 		mxocotpregs[0x08/4] = 0x200;
 		mxocotpregs[0x0/4] = 0x1000;
-		while(mxocotpregs[0x0/4] & 0x100) ; //check busy flag
+		while (mxocotpregs[0x0/4] & 0x100) ; //check busy flag
 		mac = mxocotpregs[0x20/4] & 0xFFFFFF;
-		if(!mac) {
+		if (!mac) {
 			mxocotpregs[0x0/4] = 0x0; //Close the reg first
 			mxocotpregs[0x08/4] = 0x200;
 			mxocotpregs[0x0/4] = 0x1013;
-			while(mxocotpregs[0x0/4] & 0x100) ; //check busy flag
+			while (mxocotpregs[0x0/4] & 0x100) ; //check busy flag
 			mac = (unsigned short) mxocotpregs[0x150/4];
 			mac |= 0x4f0000;
 		}
@@ -497,7 +540,7 @@ int main(int argc, char **argv)
 	/* On the TS-7682, these regs are reserverd and writing/reading will
 	 * have no effect.
 	 */
-	if(opt_dac0) {
+	if (opt_dac0) {
 		char buf[2];
 		buf[0] = ((opt_dac0 >> 9) & 0xf);
 		buf[1] = ((opt_dac0 >> 1) & 0xff);
@@ -505,7 +548,7 @@ int main(int argc, char **argv)
 		fpoke8(twifd, 0x2F, buf[1]);
 	}
 
-	if(opt_dac1) {
+	if (opt_dac1) {
 		char buf[2];
 		buf[0] = ((opt_dac1 >> 9) & 0xf);
 		buf[1] = ((opt_dac1 >> 1) & 0xff);
@@ -513,7 +556,7 @@ int main(int argc, char **argv)
 		fpoke8(twifd, 0x31, buf[1]);
 	}
 
-	if(opt_dac2) {
+	if (opt_dac2) {
 		char buf[2];
 		buf[0] = ((opt_dac2 >> 9) & 0xf);
 		buf[1] = ((opt_dac2 >> 1) & 0xff);
@@ -521,7 +564,7 @@ int main(int argc, char **argv)
 		fpoke8(twifd, 0x33, buf[1]);
 	}
 
-	if(opt_dac3) {
+	if (opt_dac3) {
 		char buf[2];
 		buf[0] = ((opt_dac3 >> 9) & 0xf);
 		buf[1] = ((opt_dac3 >> 1) & 0xff);

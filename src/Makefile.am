@@ -6,8 +6,9 @@ mx28adcctl_CPPFLAGS = -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
 switchctl_SOURCES = switchctl.c switchctl-ts768x.c
 switchctl_CPPFLAGS = -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
 
-tshwctl_SOURCES = tshwctl.c fpga.c
+tshwctl_SOURCES = tshwctl.c fpga.c gpiod-helper.c
 tshwctl_CPPFLAGS = -Wall -DGITCOMMIT="\"${GITCOMMIT}\""
+tshwctl_LDADD = -lgpiod
 
 tsmicroctl_SOURCES = tsmicroctl.c
 tsmicroctl_CPPFLAGS = -DCTL -Wall -DGITCOMMIT="\"${GITCOMMIT}\""

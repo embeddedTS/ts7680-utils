@@ -17,9 +17,10 @@
 #include <linux/types.h>
 #include <math.h>
 
-#include "fpga.h"
 #include "crossbar-ts7680.h"
 #include "crossbar-ts7682.h"
+#include "fpga.h"
+#include "gpiod-helper.h"
 
 static int twifd;
 
@@ -143,11 +144,10 @@ int main(int argc, char **argv)
 	char *uartmode = 0;
 	struct cbarpin *cbar_inputs, *cbar_outputs;
 	int cbar_size, cbar_mask;
-	struct gpiod_chip *chip = NULL;
-	struct gpiod_line *line_bootmode = NULL;
-	struct gpiod_line *line_modbus_3vn = NULL;
-	struct gpiod_line *line_modbus_fault = NULL;
-	struct gpiod_line *line_modbus_24v = NULL;
+	struct gpiod_line_request *line_bootmode = NULL;
+	struct gpiod_line_request *line_modbus_3vn = NULL;
+	struct gpiod_line_request *line_modbus_fault = NULL;
+	struct gpiod_line_request *line_modbus_24v = NULL;
 
 	static struct option long_options[] = {
 		{ "addr", 1, 0, 'm' },
@@ -195,12 +195,6 @@ int main(int argc, char **argv)
 		cbar_mask = 3;
 	} else {
 		fprintf(stderr, "Unsupported model TS-%X\n", model);
-		return 1;
-	}
-
-	chip = gpiod_chip_open_by_number(1);
-	if (chip == NULL) {
-		fprintf(stderr, "Unable to open GPIO chip\n");
 		return 1;
 	}
 
@@ -294,22 +288,28 @@ int main(int argc, char **argv)
 
 
 	if (opt_info) {
+		enum gpiod_line_value bm_value;
 		printf("model=0x%X\n", model);
-		line_bootmode = gpiod_chip_get_line(chip, 12);
+		line_bootmode = request_input_line("/dev/gpiochip1",
+						   12,
+						   "tshwctl");
 		if (line_bootmode == NULL) {
 			fprintf(stderr, "Unable to get bootmode pin\n");
 			return 1;
 		}
 
-		if (gpiod_line_request_input(line_bootmode, "tshwctl")) {
-			fprintf(stderr, "Unable to request bootmode pin\n");
-			return 1;
+		bm_value = gpiod_line_request_get_value(line_bootmode, 12);
+		if (bm_value == GPIOD_LINE_VALUE_ERROR) {
+			fprintf(stderr, "Unable to get bootmode value\n");
+		} else {
+
+			printf("bootmode=0x%X\n", (bm_value == GPIOD_LINE_VALUE_ACTIVE) ?
+						   1 : 0);
+
+			printf("fpga_revision=0x%X\n", fpeek8(twifd, 0x7F));
 		}
 
-		printf("bootmode=0x%X\n", gpiod_line_get_value(line_bootmode));
-		printf("fpga_revision=0x%X\n", fpeek8(twifd, 0x7F));
-
-		gpiod_line_release(line_bootmode);
+		gpiod_line_request_release(line_bootmode);
 	}
 
 	if (opt_get) {
@@ -372,20 +372,22 @@ int main(int argc, char **argv)
 
 	/* This requests the pins and puts them in a safe state */
 	if (opt_modbuspoweron || opt_modbuspoweroff) {
-		line_modbus_3vn = gpiod_chip_get_line(chip, 15);
-		line_modbus_fault = gpiod_chip_get_line(chip, 14);
-		line_modbus_24v = gpiod_chip_get_line(chip, 13);
+		line_modbus_3vn = request_output_line("/dev/gpiochip1",
+						      15,
+						      /* This pin is active low! */
+						      GPIOD_LINE_VALUE_ACTIVE,
+						      "tshwctl");
+		line_modbus_24v = request_output_line("/dev/gpiochip1",
+						      13,
+						      GPIOD_LINE_VALUE_INACTIVE,
+						      "tshwctl");
+		line_modbus_fault = request_input_line("/dev/gpiochip1",
+						       14,
+						       "tshwctl");
 		if (line_modbus_3vn == NULL ||
 		    line_modbus_fault == NULL ||
 		    line_modbus_24v == NULL) {
 			fprintf(stderr, "Unable to get MODBUS lines\n");
-			return 1;
-		}
-
-		if (gpiod_line_request_output(line_modbus_3vn, "tshwctl", 1) ||
-		    gpiod_line_request_input(line_modbus_fault, "tshwctl") ||
-		    gpiod_line_request_output(line_modbus_24v, "tshwctl", 0)) {
-			fprintf(stderr, "Unable to request MODBUS lines\n");
 			return 1;
 		}
 	}
@@ -394,15 +396,27 @@ int main(int argc, char **argv)
 		/* Enable 3.3 V test, wait for settle, and test the fault IO.
 		 * If no fault, then enable higher 24 V power to MODBUS device.
 		 */
-		gpiod_line_set_value(line_modbus_3vn, 0);
+		gpiod_line_request_set_value(line_modbus_3vn,
+					     15,
+					     GPIOD_LINE_VALUE_INACTIVE);
 		usleep(10000);
-		if (gpiod_line_get_value(line_modbus_fault)) {
-			gpiod_line_set_value(line_modbus_3vn, 1);
-			printf("modbuspoweron=0\n");
-		} else {
-			gpiod_line_set_value(line_modbus_3vn, 1);
-			gpiod_line_set_value(line_modbus_24v, 1);
+
+		if (gpiod_line_request_get_value(line_modbus_fault, 14) == 
+						 GPIOD_LINE_VALUE_INACTIVE) {
+			/* No fault, disable 3 V and enable 24 V */
+			gpiod_line_request_set_value(line_modbus_3vn,
+						     15,
+						     GPIOD_LINE_VALUE_ACTIVE);
+			gpiod_line_request_set_value(line_modbus_24v,
+						     13,
+						     GPIOD_LINE_VALUE_ACTIVE);
 			printf("modbuspoweron=1\n");
+		} else {
+			/* Failed for some reason, disable 3.3 V */
+			gpiod_line_request_set_value(line_modbus_3vn,
+						     15,
+						     GPIOD_LINE_VALUE_ACTIVE);
+			printf("modbuspoweron=0\n");
 		}
 	}
 
@@ -414,10 +428,9 @@ int main(int argc, char **argv)
 	 */
 
 	if (opt_modbuspoweron || opt_modbuspoweroff) {
-		gpiod_line_release(line_modbus_3vn);
-		gpiod_line_release(line_modbus_fault);
-		gpiod_line_release(line_modbus_24v);
-		gpiod_chip_close(chip);
+		gpiod_line_request_release(line_modbus_3vn);
+		gpiod_line_request_release(line_modbus_fault);
+		gpiod_line_request_release(line_modbus_24v);
 	}
 
 	if (opt_poke && opt_addr) {
